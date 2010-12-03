@@ -13,19 +13,18 @@ namespace FileDump
         {
             Console.Write("Image Width: ");
             int width = int.Parse(Console.ReadLine());
-            foreach(string path in args)
+            Console.Write("Binary mode? ");
+            bool binary = Console.ReadLine().Trim().ToLower()[0] == 'y';
+            foreach (string path in args)
             {
                 Bitmap b = new Bitmap(1, 1);
-                byte[] allbytes = rawData(path);
-                b = new Bitmap(width, (int)Math.Ceiling((double)allbytes.Length / width));
-                for (int i = 0; i < allbytes.Length; i++)
-                    b.SetPixel(i % (int)width, i / (int)width, Color.FromArgb(allbytes[i], allbytes[i], allbytes[i]));
-                b.Save(path + "." + width.ToString("0") + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                byte[] allbytes = File.ReadAllBytes(path);
+                b = new Bitmap(width, (int)Math.Ceiling((double)(allbytes.Length * (binary ? 8 : 1)) / width));
+                for (int i = 0; i < allbytes.Length * (binary ? 8 : 1); i++)
+                    b.SetPixel(i % (int)width, i / (int)width, binary ? (((allbytes[i / 8] >> (7 - (i % 8))) & 0x01) != 0 ? Color.Black : Color.White) : Color.FromArgb(allbytes[i], allbytes[i], allbytes[i]));
+                b.Save(path + "." + width.ToString("0") + (binary ? "b" : "") + ".png", System.Drawing.Imaging.ImageFormat.Png);
                 b.Dispose();
             }
         }
-
-        static byte[] rawData(string filename)
-        { return File.ReadAllBytes(filename); }
     }
 }
